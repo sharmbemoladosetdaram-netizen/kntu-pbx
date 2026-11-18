@@ -1,0 +1,11 @@
+<extension name="sequential_hunting_with_confirm">
+  <condition field="destination_number" expression="^2222$">
+    <action application="set" data="group_confirm_key=1"/>
+    <action application="set" data="group_confirm_file=tone_stream://%(200,0,800)"/>
+    <action application="set" data="continue_on_fail=TIMEOUT,NO_ANSWER,USER_NOT_REGISTERED"/>
+    <action application="set" data="hangup_after_bridge=true"/>
+    <action application="bridge" data="[leg_timeout=15]user/1001"/>
+    <action application="bridge" data="[leg_timeout=15]user/1002"/>
+    <action application="bridge" data="[leg_timeout=15]user/1003"/>
+  </condition>
+</extension>
