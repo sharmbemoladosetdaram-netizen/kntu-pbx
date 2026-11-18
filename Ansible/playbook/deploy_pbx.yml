@@ -1,0 +1,47 @@
+---
+- name: Deploy kntu PBX Core Engine
+  hosts: pbx_servers
+  become: true
+
+  tasks:
+    - name: Ensure Podman and Podman Compose are installed (RHEL/Rocky/CentOS)
+      ansible.builtin.dnf:
+        name:
+          - podman
+          - podman-compose
+        state: present
+
+    - name: Create PBX core directory
+      ansible.builtin.file:
+        path: "/opt/kntu-pbx-core"
+        state: directory
+        mode: '0755'
+
+    - name: Generate podman-compose.yml for PBX
+      ansible.builtin.copy:
+        dest: "/opt/kntu-pbx-core/podman-compose.yml"
+        content: |
+          version: '3.8'
+          services:
+            freeswitch:
+              image: docker.io/safarov/freeswitch:latest
+              container_name: kntu_pbx_core
+              network_mode: "host" 
+              restart: unless-stopped
+              command: ["freeswitch", "-nonat"]
+
+    - name: Pull and start PBX core container
+      ansible.builtin.command:
+        cmd: podman-compose up -d
+        chdir: "/opt/kntu-pbx-core"
+      register: compose_output
+      changed_when: "'Starting' in compose_output.stdout or 'Pulling' in compose_output.stdout"
+
+    - name: Check PBX core container status
+      ansible.builtin.command: podman ps -f name=kntu_pbx_core
+      register: container_status
+      changed_when: false
+
+    - name: Display PBX core container status
+      ansible.builtin.debug:
+        var: container_status.stdout_lines
