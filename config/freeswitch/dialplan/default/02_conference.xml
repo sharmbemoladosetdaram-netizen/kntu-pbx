@@ -1,0 +1,21 @@
+<extension name="permanent_meeting_rooms">
+  <condition field="destination_number" expression="^(30\d{2})$">
+    <action application="answer"/>
+    <action application="conference" data="$1@default"/>
+  </condition>
+</extension>
+
+
+<extension name="outbound_blast_dial">
+  <condition field="destination_number" expression="^3100$">
+    <action application="conference_set_auto_outcall" data="user/1001"/>
+    <action application="conference_set_auto_outcall" data="user/1002"/>
+    <action application="conference_set_auto_outcall" data="user/1003"/>
+
+    <action application="set" data="conference_auto_outcall_caller_id_name=Emergency_Meeting"/>
+    <action application="set" data="conference_auto_outcall_caller_id_number=3100"/>
+
+    <action application="answer"/>
+    <action application="conference" data="3100@default"/>
+  </condition>
+</extension>
