@@ -46,20 +46,13 @@
         owner: root
         group: root
 
-    - name: Generate podman-compose.yml for PBX
+    - name: Copy podman-compose.yml to remote server
       ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/podman-compose.yml"
         dest: "/opt/kntu-pbx-core/podman-compose.yml"
-        content: |
-          version: '3.8'
-          services:
-            freeswitch:
-              image: docker.io/safarov/freeswitch:latest
-              container_name: kntu_pbx_core
-              network_mode: "host" 
-              restart: unless-stopped
-              command: ["freeswitch", "-nonat"]
-              volumes:
-                - ./freeswitch:/etc/freeswitch
+        owner: root
+        group: root
+        mode: '0644'
 
     - name: Pull and start new PBX core container
       ansible.builtin.command:

@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  freeswitch:
+    image: docker.io/safarov/freeswitch:latest
+    container_name: kntu_pbx_core
+    network_mode: "host" 
+    restart: unless-stopped
+    command: ["freeswitch", "-nonat"]
+    volumes:
+      - ./freeswitch:/etc/freeswitch
