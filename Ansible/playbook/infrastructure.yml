@@ -1,0 +1,44 @@
+---
+- name: Install Podman and Podman Compose
+  hosts: pbx_servers
+  become: true
+  
+  tasks:
+    - name: Install Podman and dependencies on Debian/Ubuntu
+      ansible.builtin.apt:
+        name:
+          - podman
+          - podman-compose
+          - slirp4netns
+          - fuse-overlayfs
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_facts["os_family"] == 'Debian'
+
+    - name: Install Podman and dependencies on RHEL/CentOS
+      ansible.builtin.dnf:
+        name:
+          - podman
+          - podman-compose
+          - slirp4netns
+          - fuse-overlayfs
+        state: present
+        update_cache: true
+      when: ansible_facts["os_family"] == 'RedHat'
+
+    - name: Verify Podman installation
+      ansible.builtin.command: podman --version
+      register: podman_version
+      changed_when: false
+
+    - name: Verify Podman Compose installation
+      ansible.builtin.command: podman-compose --version
+      register: compose_version
+      changed_when: false
+
+    - name: Display installed versions
+      ansible.builtin.debug:
+        msg: 
+          - "Podman: {{ podman_version.stdout }}"
+          - "Podman Compose: {{ compose_version.stdout }}"
