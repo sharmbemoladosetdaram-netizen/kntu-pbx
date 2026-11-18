@@ -4,11 +4,13 @@
   become: true
 
   tasks:
-    - name: Ensure Podman and Podman Compose are installed (RHEL/Rocky/CentOS)
+    - name: Ensure required packages are installed (RHEL/Rocky/CentOS)
       ansible.builtin.dnf:
         name:
           - podman
           - podman-compose
+          - tar
+          - gzip
         state: present
 
     - name: Create PBX core directory
@@ -16,6 +18,33 @@
         path: "/opt/kntu-pbx-core"
         state: directory
         mode: '0755'
+
+    - name: Check if previous podman-compose.yml exists
+      ansible.builtin.stat:
+        path: "/opt/kntu-pbx-core/podman-compose.yml"
+      register: old_compose
+
+    - name: Tear down existing PBX container if running
+      ansible.builtin.command:
+        cmd: podman-compose down
+        chdir: "/opt/kntu-pbx-core"
+      when: old_compose.stat.exists
+      register: teardown_result
+      changed_when: "'Removing' in teardown_result.stdout or 'Stopping' in teardown_result.stdout"
+
+    - name: Compress FreeSWITCH configuration locally (on your Ubuntu machine)
+      ansible.builtin.command:
+        cmd: tar -czf /tmp/freeswitch_config.tar.gz -C "{{ playbook_dir }}/../../config" freeswitch
+      delegate_to: localhost
+      run_once: true
+      become: false
+
+    - name: Send and extract FreeSWITCH configuration to remote server
+      ansible.builtin.unarchive:
+        src: "/tmp/freeswitch_config.tar.gz"
+        dest: "/opt/kntu-pbx-core/"
+        owner: root
+        group: root
 
     - name: Generate podman-compose.yml for PBX
       ansible.builtin.copy:
@@ -29,8 +58,10 @@
               network_mode: "host" 
               restart: unless-stopped
               command: ["freeswitch", "-nonat"]
+              volumes:
+                - ./freeswitch:/etc/freeswitch
 
-    - name: Pull and start PBX core container
+    - name: Pull and start new PBX core container
       ansible.builtin.command:
         cmd: podman-compose up -d
         chdir: "/opt/kntu-pbx-core"
