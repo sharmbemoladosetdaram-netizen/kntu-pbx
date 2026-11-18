@@ -1,0 +1,14 @@
+# Ansible specific
+*.retry
+ansible.log
+
+# Sensitive variables and secrets
+secrets.yml
+*.key
+*.pem
+.env
+
+# Python and OS caches
+*.pyc
+__pycache__/
+.DS_Store
