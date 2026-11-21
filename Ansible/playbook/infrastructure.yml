@@ -1,8 +1,8 @@
 ---
-- name: Install Podman and Podman Compose
+- name: Install Podman, Podman Compose, and PowerShell
   hosts: pbx_servers
   become: true
-  
+
   tasks:
     - name: Install Podman and dependencies on Debian/Ubuntu
       ansible.builtin.apt:
@@ -14,9 +14,9 @@
         state: present
         update_cache: true
         cache_valid_time: 3600
-      when: ansible_facts["os_family"] == 'Debian'
+      when: ansible_facts["os_family"] == "Debian"
 
-    - name: Install Podman and dependencies on RHEL/CentOS
+    - name: Install Podman and dependencies on RHEL/Rocky
       ansible.builtin.dnf:
         name:
           - podman
@@ -25,8 +25,40 @@
           - fuse-overlayfs
         state: present
         update_cache: true
-      when: ansible_facts["os_family"] == 'RedHat'
+      when: ansible_facts["os_family"] == "RedHat"
 
+    # --- PowerShell setup for Rocky / RHEL ---
+    - name: Import Microsoft GPG key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://packages.microsoft.com/keys/microsoft.asc
+      when: ansible_facts["os_family"] == "RedHat"
+
+    - name: Add Microsoft production repository
+      ansible.builtin.yum_repository:
+        name: packages-microsoft-com-prod
+        description: Microsoft Production Repository
+        baseurl: "https://packages.microsoft.com/rhel/{{ ansible_facts['distribution_major_version'] }}/prod/"
+        gpgcheck: true
+        gpgkey: https://packages.microsoft.com/keys/microsoft.asc
+        enabled: true
+        file: microsoft-prod
+      when: ansible_facts["os_family"] == "RedHat"
+
+    - name: Update system packages and refresh DNF cache
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      when: ansible_facts["os_family"] == "RedHat"
+
+    - name: Install PowerShell on RHEL/Rocky
+      ansible.builtin.dnf:
+        name: powershell
+        state: present
+      when: ansible_facts["os_family"] == "RedHat"
+
+    # --- Verification ---
     - name: Verify Podman installation
       ansible.builtin.command: podman --version
       register: podman_version
@@ -37,8 +69,14 @@
       register: compose_version
       changed_when: false
 
+    - name: Verify PowerShell installation
+      ansible.builtin.command: pwsh --version
+      register: pwsh_version
+      changed_when: false
+
     - name: Display installed versions
       ansible.builtin.debug:
-        msg: 
+        msg:
           - "Podman: {{ podman_version.stdout }}"
           - "Podman Compose: {{ compose_version.stdout }}"
+          - "PowerShell: {{ pwsh_version.stdout }}"

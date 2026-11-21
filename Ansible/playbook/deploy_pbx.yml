@@ -69,3 +69,40 @@
     - name: Display PBX core container status
       ansible.builtin.debug:
         var: container_status.stdout_lines
+
+    ##### deploy pbx manager powershell module and profile for root user
+    - name: Ensure PowerShell profile and module directories exist for root
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      loop:
+        - /root/.config/powershell
+        - /root/.local/share/powershell/Modules/KntuPbxManager
+
+    - name: Deploy KntuPbxManager PowerShell module
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/KntuPbxManager/KntuPbxManager.psm1"
+        dest: /root/.local/share/powershell/Modules/KntuPbxManager/KntuPbxManager.psm1
+        owner: root
+        group: root
+        mode: "0644"
+        force: true
+
+    - name: Deploy PowerShell profile for root
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/Microsoft.PowerShell_profile.ps1"
+        dest: /root/.config/powershell/Microsoft.PowerShell_profile.ps1
+        owner: root
+        group: root
+        mode: "0644"
+        force: true
+
+    - name: Ensure KntuPbxManager is imported in PowerShell profile
+      ansible.builtin.lineinfile:
+        path: /root/.config/powershell/Microsoft.PowerShell_profile.ps1
+        regexp: '^Import-Module\s+KntuPbxManager'
+        line: 'Import-Module KntuPbxManager -ErrorAction SilentlyContinue'
+        insertbefore: '^# --- 2\. Remove dangerous built-in commands ---'
