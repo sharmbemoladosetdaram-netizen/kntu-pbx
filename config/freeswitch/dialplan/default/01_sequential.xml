@@ -1,11 +1,10 @@
 <extension name="sequential_hunting_with_confirm">
-  <condition field="destination_number" expression="^2222$">
-    <action application="set" data="group_confirm_key=1"/>
+  <condition field="destination_number" expression="^(10[01][0-9])$">
     <action application="set" data="group_confirm_file=tone_stream://%(200,0,800)"/>
     <action application="set" data="continue_on_fail=TIMEOUT,NO_ANSWER,USER_NOT_REGISTERED"/>
+    <action application="set" data="fail_on_single_reject=USER_BUSY,CALL_REJECTED"/>
     <action application="set" data="hangup_after_bridge=true"/>
-    <action application="bridge" data="[leg_timeout=15]user/1001"/>
-    <action application="bridge" data="[leg_timeout=15]user/1002"/>
-    <action application="bridge" data="[leg_timeout=15]user/1003"/>
+    <action application="set" data="seq_contacts=${lua($${conf_dir}/scripts/seq_contacts.lua $1 ${domain_name})}"/>
+    <action application="bridge" data="{leg_timeout=15}${seq_contacts}"/>
   </condition>
 </extension>

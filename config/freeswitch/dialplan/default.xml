@@ -244,6 +244,7 @@
 	 call fails (continue_on_fail=true), otherwise hang up after a successful
 	 bridge (hangup_after_bridge=true)
     -->
+    <X-PRE-PROCESS cmd="include" data="default/*.xml"/>
     <extension name="Local_Extension">
       <condition field="destination_number" expression="^(10[01][0-9])$">
 	<action application="export" data="dialed_extension=$1"/>
@@ -765,7 +766,6 @@
     <!--
 	You can place files in the default directory to get included.
     -->
-    <X-PRE-PROCESS cmd="include" data="default/*.xml"/>
 
     <!--
     <extension name="refer">
